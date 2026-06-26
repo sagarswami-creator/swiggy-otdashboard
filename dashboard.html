@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiggy IRCTC — OT Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F8F9FB;--surface:#FFFFFF;--surface2:#F2F4F7;
+  --border:#E4E7EC;--border2:#D0D5DD;
+  --text:#101828;--text2:#344054;--text3:#667085;--text4:#98A2B3;
+  --orange:#EA580C;--orange-bg:#FFF4EE;--orange-mid:#FB923C;
+  --green:#027A48;--green-bg:#ECFDF3;--green-mid:#12B76A;
+  --amber:#B54708;--amber-bg:#FFFAEB;--amber-mid:#F79009;
+  --red:#B42318;--red-bg:#FEF3F2;--red-mid:#F04438;
+  --blue:#175CD3;--blue-bg:#EFF8FF;--blue-mid:#2E90FA;
+  --purple:#5925DC;--purple-bg:#F4F3FF;--purple-mid:#7A5AF8;
+  --r:8px;--r2:12px;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+/* ─── TOP NAV ─── */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.nav-brand{display:flex;align-items:center;gap:12px;}
+.nav-dot{width:36px;height:36px;border-radius:10px;background:#EA580C;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-dot svg{width:20px;height:20px;fill:white;}
+.nav-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.2px;}
+.nav-tag{font-size:12px;color:var(--text3);margin-top:1px;}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);border-radius:var(--r);padding:6px 12px;font-size:13px;font-weight:500;color:var(--text2);background:var(--surface);cursor:pointer;transition:border-color .15s;}
+.chip:hover{border-color:var(--orange);}
+.chip svg{width:14px;height:14px;color:inherit;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green-mid);display:inline-block;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#upd{font-size:12px;color:var(--text4);}
+
+/* ─── FILTER STRIP ─── */
+.fstrip{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 32px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:64px;z-index:99;}
+.fl{font-size:11px;font-weight:600;color:var(--text4);text-transform:uppercase;letter-spacing:.6px;padding-right:4px;}
+.fsel,.finp{height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--r);font-family:inherit;font-size:13px;color:var(--text2);background:var(--surface);outline:none;transition:border-color .15s,box-shadow .15s;}
+.fsel{padding-right:26px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2398A2B3' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
+.fsel:focus,.finp:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(234,88,12,.08);}
+.finp{width:180px;}
+.fdiv{width:1px;height:20px;background:var(--border);}
+.clr{height:32px;padding:0 12px;background:transparent;border:1px solid var(--border);border-radius:var(--r);font-family:inherit;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;}
+.clr:hover{color:var(--orange);border-color:var(--orange);}
+
+/* ─── BODY ─── */
+.body{max-width:1440px;margin:0 auto;padding:24px 32px 48px;}
+
+/* ─── KPI ROW ─── */
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px;position:relative;overflow:hidden;}
+.kpi-stripe{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stripe,#CBD5E1);}
+.kpi-label{font-size:11px;font-weight:600;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.kpi-value{font-size:28px;font-weight:800;color:var(--text);line-height:1;letter-spacing:-.5px;margin-bottom:6px;}
+.kpi-sub{font-size:12px;color:var(--text3);}
+.kpi-icon{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:8px;background:var(--icon-bg,var(--surface2));display:flex;align-items:center;justify-content:center;}
+.kpi-icon svg{width:16px;height:16px;}
+
+/* ─── ALERT ─── */
+.alert{display:none;align-items:center;gap:10px;background:var(--amber-bg);border:1px solid #FEC84B;border-radius:var(--r);padding:10px 16px;margin-bottom:20px;font-size:13px;color:var(--amber);font-weight:500;}
+.alert svg{width:16px;height:16px;flex-shrink:0;}
+
+/* ─── PANELS ─── */
+.panel-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);}
+.panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.panel-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;}
+.panel-title svg{width:15px;height:15px;color:var(--text3);}
+.panel-count{font-size:12px;font-weight:500;color:var(--text3);background:var(--surface2);border-radius:20px;padding:2px 8px;}
+.panel-body{padding:16px 20px;}
+
+/* ─── BAR CHART ─── */
+.bar-item{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.bar-item:last-child{margin-bottom:0;}
+.bar-name{font-size:12px;font-weight:500;color:var(--text2);width:108px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.bar-val{font-size:12px;font-weight:600;width:54px;text-align:right;flex-shrink:0;}
+
+/* ─── TABLE ─── */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:20px;}
+.tbl-head-row{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);}
+.tbl-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;}
+.tbl-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:var(--bg);}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text4);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none;cursor:pointer;}
+th:hover{color:var(--text2);}
+td{padding:12px 16px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:#FAFBFC;}
+.td-bold{font-weight:600;}
+.td-mono{font-variant-numeric:tabular-nums;}
+.td-muted{color:var(--text3);font-size:12px;}
+
+/* ─── BADGES ─── */
+.bdg{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.bdg-ok{background:var(--green-bg);color:var(--green);}
+.bdg-pend{background:var(--amber-bg);color:var(--amber);}
+.bdg-err{background:var(--red-bg);color:var(--red);}
+.bdg-info{background:var(--surface2);color:var(--text3);}
+.pill{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;background:var(--orange-bg);color:var(--orange);}
+.pill-blue{background:var(--blue-bg);color:var(--blue);}
+.reason-tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:500;background:var(--surface2);color:var(--text3);}
+
+/* ─── EMPTY / LOADING ─── */
+.loader{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:52px;}
+.spin{width:28px;height:28px;border:2.5px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loader-txt{font-size:13px;color:var(--text4);}
+.empty{text-align:center;padding:40px;color:var(--text4);font-size:13px;}
+
+/* ─── ERR BANNER ─── */
+.err-bar{display:none;background:var(--red-bg);border:1px solid #FDA29B;border-radius:var(--r);padding:10px 16px;font-size:13px;color:var(--red);margin-bottom:16px;}
+
+@media(max-width:1100px){.kpi-row{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:768px){
+  .panel-row{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .body{padding:16px;}
+  .nav,.fstrip{padding-left:16px;padding-right:16px;}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-dot">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+    </div>
+    <div>
+      <div class="nav-name">Swiggy IRCTC — OT Monitor</div>
+      <div class="nav-tag">Overtime operations dashboard</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="live-dot"></span>
+    <span id="upd" style="font-size:12px;color:var(--text4);">—</span>
+    <button class="chip" onclick="loadData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.5 9A9 9 0 005.6 5.6L1 10M23 14l-4.6 4.4A9 9 0 013.5 15"/></svg>
+      Refresh
+    </button>
+  </div>
+</nav>
+
+<div class="fstrip">
+  <span class="fl">Filter</span>
+  <select class="fsel" id="f-month" onchange="go()"><option value="">All months</option></select>
+  <select class="fsel" id="f-station" onchange="go()"><option value="">All stations</option></select>
+  <input class="finp" id="f-search" placeholder="Search name or mobile" oninput="go()">
+  <div class="fdiv"></div>
+  <select class="fsel" id="f-status" onchange="go()">
+    <option value="">All status</option>
+    <option value="ok">Complete</option>
+    <option value="pend">Pending</option>
+    <option value="err">Issues</option>
+  </select>
+  <select class="fsel" id="f-reason" onchange="go()">
+    <option value="">All reasons</option>
+    <option value="High Orders">High Orders</option>
+    <option value="Special Train">Special Train</option>
+    <option value="Staff Shortage">Staff Shortage</option>
+    <option value="Bulk Orders">Bulk Orders</option>
+  </select>
+  <button class="clr" onclick="clearF()">Clear all</button>
+</div>
+
+<div class="body">
+
+  <div class="err-bar" id="err-bar"></div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-stripe" style="--stripe:#EA580C"></div>
+      <div class="kpi-icon" style="--icon-bg:#FFF4EE;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="kpi-label">Total OT entries</div>
+      <div class="kpi-value" id="k0">—</div>
+      <div class="kpi-sub" id="k0s">this period</div>
+    </div>
+    <div class="kpi"><div class="kpi-stripe" style="--stripe:#12B76A"></div>
+      <div class="kpi-icon" style="--icon-bg:#ECFDF3;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#12B76A" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="kpi-label">Complete</div>
+      <div class="kpi-value" id="k1">—</div>
+      <div class="kpi-sub">start and end submitted</div>
+    </div>
+    <div class="kpi"><div class="kpi-stripe" style="--stripe:#F79009"></div>
+      <div class="kpi-icon" style="--icon-bg:#FFFAEB;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#F79009" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="kpi-label">Pending OT</div>
+      <div class="kpi-value" id="k2">—</div>
+      <div class="kpi-sub">no OT End yet</div>
+    </div>
+    <div class="kpi"><div class="kpi-stripe" style="--stripe:#2E90FA"></div>
+      <div class="kpi-icon" style="--icon-bg:#EFF8FF;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2E90FA" stroke-width="2"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3v4M8 3v4"/></svg>
+      </div>
+      <div class="kpi-label">Orders in OT</div>
+      <div class="kpi-value" id="k3">—</div>
+      <div class="kpi-sub">deliveries during overtime</div>
+    </div>
+    <div class="kpi"><div class="kpi-stripe" style="--stripe:#7A5AF8"></div>
+      <div class="kpi-icon" style="--icon-bg:#F4F3FF;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7A5AF8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="kpi-label">Total OT hours</div>
+      <div class="kpi-value" id="k4">—</div>
+      <div class="kpi-sub">all workers combined</div>
+    </div>
+    <div class="kpi"><div class="kpi-stripe" style="--stripe:#0BA5EC"></div>
+      <div class="kpi-icon" style="--icon-bg:#F0F9FF;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0BA5EC" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="kpi-label">Active stations</div>
+      <div class="kpi-value" id="k5">—</div>
+      <div class="kpi-sub">with OT this period</div>
+    </div>
+  </div>
+
+  <div class="alert" id="alert">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span id="alert-txt"></span>
+  </div>
+
+  <div class="panel-row">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          Workers by OT hours
+        </div>
+        <span class="panel-count" id="wc">top 7</span>
+      </div>
+      <div class="panel-body" id="chart-w">
+        <div class="loader"><div class="spin"></div><div class="loader-txt">Loading…</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+          Stations by OT hours
+        </div>
+        <span class="panel-count" id="sc2">top 7</span>
+      </div>
+      <div class="panel-body" id="chart-s">
+        <div class="loader"><div class="spin"></div><div class="loader-txt">Loading…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <div class="tbl-head-row">
+      <div class="tbl-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        OT summary
+      </div>
+      <span class="panel-count" id="cnt-sum">0 records</span>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr>
+          <th onclick="sort('date')">Date</th>
+          <th onclick="sort('name')">Worker</th>
+          <th>Mobile</th>
+          <th onclick="sort('station')">Station</th>
+          <th>OT start</th>
+          <th>OT end</th>
+          <th onclick="sort('mins')">Hours</th>
+          <th>Reason</th>
+          <th onclick="sort('orders')">Orders</th>
+          <th>Status</th>
+        </tr></thead>
+        <tbody id="tb-sum">
+          <tr><td colspan="10"><div class="loader"><div class="spin"></div><div class="loader-txt">Loading data…</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <div class="tbl-head-row">
+      <div class="tbl-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+        Station-wise breakdown
+      </div>
+      <span class="panel-count" id="cnt-st">0 stations</span>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr>
+          <th>Station</th><th>Code</th>
+          <th>Workers</th><th>Entries</th>
+          <th>Total hours</th><th>Total orders</th>
+          <th>Pending</th><th>Complete</th>
+        </tr></thead>
+        <tbody id="tb-st">
+          <tr><td colspan="8"><div class="loader"><div class="spin"></div><div class="loader-txt">Loading…</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_-5Jnily0Ep3j14dY5I6bgVBOatIQ8z805f7Iz8sHisKvnAyt-472y0zdD2Lkb42I/exec';
+let all = [], fil = [], sortKey = 'date', sortDir = -1;
+
+async function loadData() {
+  document.getElementById('upd').textContent = 'Updating…';
+  try {
+    const r = await fetch(SCRIPT_URL + '?action=getSummary', { cache: 'no-store' });
+    const j = await r.json();
+    if (j.status !== 'ok') throw new Error(j.message || 'Error');
+    all = j.data || [];
+    document.getElementById('err-bar').style.display = 'none';
+  } catch(e) {
+    all = demo();
+    if (SCRIPT_URL !== 'YOUR_OT_APPS_SCRIPT_URL_HERE') {
+      const el = document.getElementById('err-bar');
+      el.textContent = 'Could not reach sheet: ' + e.message + '. Showing demo data.';
+      el.style.display = 'block';
+    }
+  }
+  buildFilters(); go();
+  const now = new Date();
+  document.getElementById('upd').textContent = 'Updated ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+
+function buildFilters() {
+  const months = [...new Set(all.map(r => (r.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  const ms = document.getElementById('f-month');
+  ms.innerHTML = '<option value="">All months</option>' + months.map(m => `<option value="${m}">${fmMonth(m)}</option>`).join('');
+  const now = new Date();
+  const cur = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  if (months.includes(cur)) ms.value = cur;
+  const sts = [...new Set(all.map(r => r.station).filter(Boolean))].sort();
+  document.getElementById('f-station').innerHTML = '<option value="">All stations</option>' + sts.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+function go() {
+  const month = document.getElementById('f-month').value;
+  const station = document.getElementById('f-station').value;
+  const search = document.getElementById('f-search').value.toLowerCase();
+  const status = document.getElementById('f-status').value;
+  const reason = document.getElementById('f-reason').value;
+
+  fil = all.filter(r => {
+    if (month && !(r.date||'').startsWith(month)) return false;
+    if (station && r.station !== station) return false;
+    if (reason && r.reason !== reason) return false;
+    if (search && !(r.name||'').toLowerCase().includes(search) && !(r.mobile||'').includes(search)) return false;
+    const st = r.status || '';
+    if (status === 'ok'   && !st.includes('Complete'))  return false;
+    if (status === 'pend' && !st.includes('progress'))  return false;
+    if (status === 'err'  && !st.includes('⚠'))         return false;
+    return true;
+  });
+
+  renderKPI(); renderCharts(); renderSumTable(); renderStTable();
+}
+
+function clearF() {
+  ['f-month','f-station','f-status','f-reason'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-search').value = '';
+  go();
+}
+
+function sort(key) {
+  if (!fil.length) return;
+  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key === 'date' ? -1 : 1; }
+  renderSumTable();
+}
+
+function renderKPI() {
+  const ok = fil.filter(r => (r.status||'').includes('Complete'));
+  const pend = fil.filter(r => (r.status||'').includes('progress'));
+  const orders = fil.reduce((s,r) => s + (Number(r.orders)||0), 0);
+  const stations = new Set(fil.map(r => r.station)).size;
+  let mins = 0; fil.forEach(r => { const m = pm(r.otHours); if(m>0) mins+=m; });
+  const h = Math.floor(mins/60), mn = mins%60;
+
+  document.getElementById('k0').textContent = fil.length;
+  document.getElementById('k0s').textContent = fil.length === 1 ? '1 record this period' : fil.length + ' records this period';
+  document.getElementById('k1').textContent = ok.length;
+  document.getElementById('k2').textContent = pend.length;
+  document.getElementById('k3').textContent = orders;
+  document.getElementById('k4').textContent = h + 'h ' + String(mn).padStart(2,'0') + 'm';
+  document.getElementById('k5').textContent = stations;
+
+  const al = document.getElementById('alert');
+  if (pend.length > 0) {
+    al.style.display = 'flex';
+    document.getElementById('alert-txt').textContent = pend.length + ' worker' + (pend.length > 1 ? 's have' : ' has') + ' submitted OT Start with no OT End — check in with them.';
+  } else { al.style.display = 'none'; }
+}
+
+function renderCharts() {
+  const wm = {};
+  fil.forEach(r => { const k = r.name || r.mobile || '?'; wm[k] = (wm[k]||0) + pm(r.otHours); });
+  const tw = Object.entries(wm).sort((a,b) => b[1]-a[1]).slice(0,7);
+  const maxW = tw[0]?.[1] || 1;
+  document.getElementById('wc').textContent = 'top ' + tw.length;
+  document.getElementById('chart-w').innerHTML = tw.length
+    ? tw.map(([n,m]) => {
+        const h=Math.floor(m/60),mn=m%60;
+        return `<div class="bar-item">
+          <div class="bar-name" title="${n}">${n}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(m/maxW*100)}%;background:#EA580C;opacity:.85"></div></div>
+          <div class="bar-val" style="color:#EA580C">${h}h${String(mn).padStart(2,'0')}m</div>
+        </div>`;
+      }).join('')
+    : '<div class="empty">No data for this filter</div>';
+
+  const sm = {};
+  fil.forEach(r => { const k = r.station || '?'; sm[k] = (sm[k]||0) + pm(r.otHours); });
+  const ts = Object.entries(sm).sort((a,b) => b[1]-a[1]).slice(0,7);
+  const maxS = ts[0]?.[1] || 1;
+  document.getElementById('sc2').textContent = 'top ' + ts.length;
+  document.getElementById('chart-s').innerHTML = ts.length
+    ? ts.map(([n,m]) => {
+        const h=Math.floor(m/60),mn=m%60;
+        return `<div class="bar-item">
+          <div class="bar-name" title="${n}">${n}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(m/maxS*100)}%;background:#2E90FA;opacity:.85"></div></div>
+          <div class="bar-val" style="color:#2E90FA">${h}h${String(mn).padStart(2,'0')}m</div>
+        </div>`;
+      }).join('')
+    : '<div class="empty">No data for this filter</div>';
+}
+
+function renderSumTable() {
+  document.getElementById('cnt-sum').textContent = fil.length + ' record' + (fil.length !== 1 ? 's' : '');
+  const tb = document.getElementById('tb-sum');
+  const sorted = [...fil].map(r => ({...r, mins: pm(r.otHours)})).sort((a,b) => {
+    let av = a[sortKey]||'', bv = b[sortKey]||'';
+    if (sortKey === 'mins' || sortKey === 'orders') { av = Number(av); bv = Number(bv); }
+    if (av < bv) return -sortDir; if (av > bv) return sortDir; return 0;
+  });
+  if (!sorted.length) { tb.innerHTML = '<tr><td colspan="10"><div class="empty">No records match your filters</div></td></tr>'; return; }
+  tb.innerHTML = sorted.map(r => {
+    const st = r.status || '';
+    const badge = st.includes('Complete') ? '<span class="bdg bdg-ok">Complete</span>'
+      : st.includes('progress') ? '<span class="bdg bdg-pend">Pending</span>'
+      : st.includes('⚠') ? '<span class="bdg bdg-err">Issue</span>'
+      : `<span class="bdg bdg-info">${st}</span>`;
+    return `<tr>
+      <td class="td-mono td-muted">${fd(r.date)}</td>
+      <td class="td-bold">${esc(r.name)||'—'}</td>
+      <td class="td-muted td-mono">${r.mobile||'—'}</td>
+      <td>${esc(r.station)||'—'} ${esc(r.stationCode) ? '<span class="pill">'+esc(r.stationCode)+'</span>' : ''}</td>
+      <td class="td-mono">${r.otStart||'—'}</td>
+      <td class="td-mono">${r.otEnd||'—'}</td>
+      <td class="td-bold td-mono" style="color:var(--orange)">${r.otHours||'—'}</td>
+      <td>${r.reason ? '<span class="reason-tag">'+r.reason+'</span>' : '—'}</td>
+      <td class="td-bold td-mono" style="color:var(--blue)">${r.orders||'0'}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStTable() {
+  const sm = {};
+  fil.forEach(r => {
+    const k = r.station || 'Unknown';
+    if (!sm[k]) sm[k] = {s:k, code:r.stationCode||'', workers:new Set(), n:0, mins:0, orders:0, pend:0, ok:0};
+    sm[k].workers.add(r.mobile); sm[k].n++;
+    sm[k].mins += pm(r.otHours); sm[k].orders += Number(r.orders)||0;
+    if ((r.status||'').includes('Complete')) sm[k].ok++;
+    if ((r.status||'').includes('progress')) sm[k].pend++;
+  });
+  const rows = Object.values(sm).sort((a,b) => b.mins - a.mins);
+  document.getElementById('cnt-st').textContent = rows.length + ' station' + (rows.length !== 1 ? 's' : '');
+  const tb = document.getElementById('tb-st');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="8"><div class="empty">No station data</div></td></tr>'; return; }
+  tb.innerHTML = rows.map(s => {
+    const h = Math.floor(s.mins/60), m = s.mins%60;
+    return `<tr>
+      <td class="td-bold">${esc(s.s)||'—'}</td>
+      <td><span class="pill">${s.code}</span></td>
+      <td>${s.workers.size}</td>
+      <td>${s.n}</td>
+      <td class="td-bold td-mono" style="color:var(--orange)">${s.mins > 0 ? h+'h '+String(m).padStart(2,'0')+'m' : '—'}</td>
+      <td class="td-bold td-mono" style="color:var(--blue)">${s.orders}</td>
+      <td>${s.pend > 0 ? '<span class="bdg bdg-pend">'+s.pend+'</span>' : '—'}</td>
+      <td>${s.ok > 0 ? '<span class="bdg bdg-ok">'+s.ok+'</span>' : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function pm(str) {
+  if (!str || str === '—') return 0;
+  const m = str.match(/(\d+)h\s*(\d+)?m?/);
+  return m ? (parseInt(m[1])||0)*60 + (parseInt(m[2])||0) : 0;
+}
+function fd(d) {
+  if (!d) return '—';
+  try {
+    const parts = String(d).split('-');
+    if (parts.length === 3) {
+      const dt = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+      return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    }
+    return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  } catch { return d; }
+}
+function fmMonth(m) {
+  if (!m) return '';
+  const [y,mo] = m.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(mo)-1] + ' ' + y;
+}
+
+function demo() {
+  const n=new Date(),y=n.getFullYear(),mo=String(n.getMonth()+1).padStart(2,'0');
+  return [
+    {date:`${y}-${mo}-01`,name:'Ramesh Kumar', mobile:'9876543210',station:'Vijayawada',stationCode:'BZA',otStart:'15:00',otEnd:'17:30',otHours:'2h 30m',reason:'High Orders',  orders:'8', status:'✓ OT Complete'},
+    {date:`${y}-${mo}-01`,name:'Suresh Reddy', mobile:'9876543211',station:'Bhopal',    stationCode:'BPL',otStart:'14:00',otEnd:'16:00',otHours:'2h 00m',reason:'Special Train', orders:'5', status:'✓ OT Complete'},
+    {date:`${y}-${mo}-02`,name:'Ajay Singh',   mobile:'9876543212',station:'Madgaon',   stationCode:'MAO',otStart:'16:00',otEnd:'',     otHours:'',       reason:'Bulk Orders',  orders:'0', status:'⏳ OT in progress'},
+    {date:`${y}-${mo}-03`,name:'Priya Sharma', mobile:'9876543213',station:'Vijayawada',stationCode:'BZA',otStart:'13:00',otEnd:'15:30',otHours:'2h 30m',reason:'High Orders',  orders:'10',status:'✓ OT Complete'},
+    {date:`${y}-${mo}-04`,name:'Ravi Kumar',   mobile:'9876543214',station:'Kalaburagi',stationCode:'GR', otStart:'17:00',otEnd:'19:00',otHours:'2h 00m',reason:'Staff Shortage',orders:'6', status:'✓ OT Complete'},
+    {date:`${y}-${mo}-05`,name:'Ramesh Kumar', mobile:'9876543210',station:'Vijayawada',stationCode:'BZA',otStart:'15:30',otEnd:'18:00',otHours:'2h 30m',reason:'Bulk Orders',  orders:'12',status:'✓ OT Complete'},
+    {date:`${y}-${mo}-06`,name:'Deepak Verma', mobile:'9876543215',station:'Rourkela',  stationCode:'ROU',otStart:'14:30',otEnd:'',     otHours:'',       reason:'High Orders',  orders:'0', status:'⏳ OT in progress'},
+    {date:`${y}-${mo}-07`,name:'Suresh Reddy', mobile:'9876543211',station:'Bhopal',    stationCode:'BPL',otStart:'16:00',otEnd:'18:30',otHours:'2h 30m',reason:'Special Train', orders:'7', status:'✓ OT Complete'},
+  ];
+}
+
+loadData();
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
